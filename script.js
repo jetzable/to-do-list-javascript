@@ -1,60 +1,68 @@
-// Crea un botón de "cerrar" para cada elemento de la lista
-var myNodelist = document.getElementsByTagName("LI");
-var i;
-for (i = 0; i < myNodelist.length; i++) {
-  var span = document.createElement("SPAN");
-  // <span></span>
-  var txt = document.createTextNode("\u00D7");
-  // \u00D7 Simbolo 'x'
-  span.className = "close";
-  span.appendChild(txt);
-  myNodelist[i].appendChild(span);
-  // <li>Hit the gym <span class="close">x</span></li>
+// Lista de tareas, persistente en el localStorage
+let tasks = JSON.parse(localStorage.getItem('taskList')) || [];
+let checked = JSON.parse(localStorage.getItem('checkedTasks')) || [];
+
+// Función para agregar una tarea
+const addTask = (ev) => {
+  ev.preventDefault(); // Evita que se recargue la página
+  // Si la lista está vacía, elimina el mensaje de lista vacía
+  if(document.getElementById('empty-list')) {
+    document.getElementById('empty-list').remove();
+  }
+  // Obtiene el valor del input
+  let newTask = document.getElementById("newTask").value;
+  // Agrega la tarea a la lista
+  tasks.push(newTask);
+  // Resetea el valor del input a vacío
+  document.getElementById("newTask").value = '';
+  // Guarda la lista en el localStorage
+  localStorage.setItem('taskList', JSON.stringify(tasks));
+  // Muestra la lista actualizada
+  showTasks();
 }
 
-// Clic en 'x' para eliminar elementos de la lista
-var close = document.getElementsByClassName("close");
-// Selecciona los botones 'x'
-var i;
-for (i = 0; i < close.length; i++) {
-  close[i].onclick = function() {
-    var div = this.parentElement;
-    div.style.display = "none";
-    // Esconde elemento
-  }
-}
+// Evento para agregar una tarea cuando se hace click en el botón "Agregar"
+document.getElementById('add-task-form')
+  .addEventListener('submit', addTask);
 
-// Añade el checkmark y la clase "checked" cuando le das clic a un item de la lista
-var list = document.querySelector('ul');
-list.addEventListener('click', function(ev) {
-  if (ev.target.tagName === 'LI') {
-    ev.target.classList.toggle('checked');
-  }
-}, false);
-
-// Crea un nuevo item en la lista al dar clic en Add
-function newElement() {
-  var li = document.createElement("li");
-  var inputValue = document.getElementById("myInput").value;
-  var t = document.createTextNode(inputValue);
-  li.appendChild(t);
-  if (inputValue === '') {
-    alert("You must write something!");
+// Función para mostrar las tareas
+function showTasks() {
+  // Si la lista está vacía, muestra un mensaje
+  if(tasks.length === 0) {
+    document.getElementById('task-list-container').innerHTML = '<div id="empty-list">No hay tareas pendientes</div>';
   } else {
-    document.getElementById("myUL").appendChild(li);
-  }
-  document.getElementById("myInput").value = "";
-
-  var span = document.createElement("SPAN");
-  var txt = document.createTextNode("\u00D7");
-  span.className = "close";
-  span.appendChild(txt);
-  li.appendChild(span);
-
-  for (i = 0; i < close.length; i++) {
-    close[i].onclick = function() {
-      var div = this.parentElement;
-      div.style.display = "none";
+    // Si la lista no está vacía, muestra la lista
+    // Obtiene la lista del localStorage
+    const previousTasks = localStorage.getItem('taskList');
+    if(JSON.parse(previousTasks).length > 0) {
+      // Si la lista no está vacía, genera el HTML para cada tarea
+      const listHtml = JSON.parse(previousTasks).reduce((list, task, index) => {
+      const isChecked = checked.includes(index) ? 'checked' : '';
+        return list + `
+        <li>
+          <div class="task">
+            <input type="checkbox" id="task-${index}" name="task-${index}" value="${task}" class="checkbox">
+            <label>${task}</label>
+          </div>
+          <button onclick="deleteTask(${index})">Eliminar</button>
+        </li>`
+      }, '');
+      // Añade el HTML al contenedor de la lista
+      const container = document.getElementById('task-list-container');
+      container.innerHTML = listHtml;
     }
   }
 }
+
+// Función para eliminar una tarea
+function deleteTask(index) {
+  // Elimina la tarea de la lista
+  tasks.splice(index, 1);
+  // Guarda la lista actualizada en el localStorage
+  localStorage.setItem('taskList', JSON.stringify(tasks));
+  // Muestra la lista actualizada
+  showTasks();
+}
+
+// Muestra la lista de tareas al cargar la página
+showTasks();
